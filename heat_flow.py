@@ -48,5 +48,6 @@ def form_problem(**kwargs):
     J = form_jacobian(x, b, h)
 
     K = k * dot(J, J.T)
-    F = (ρ * c * Dt(T) * φ + inner(dot(K, grad(T)), grad(φ)) - q * φ) * h * dx
-    return F
+    F = -dot(K, grad(T))
+    eqn = (ρ * c * Dt(T) * φ - inner(F, grad(φ)) - q * φ) * h * dx
+    return eqn
