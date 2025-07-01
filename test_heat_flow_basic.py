@@ -4,11 +4,7 @@ from firedrake import Constant
 import irksome
 import heat_flow
 
-
-# interval = firedrake.IntervalMesh(nx, lx)
-# mesh = firedrake.ExtrudedMesh(interval, nz)
-
-lx, lz = 20e3, 1.0
+lx, lz = 20e3, 3e3
 nz = 19
 nx = 40
 
@@ -16,24 +12,21 @@ mesh = firedrake.RectangleMesh(nx, nz, lx, lz, diagonal="crossed")
 cg1 = firedrake.FiniteElement("CG", "triangle", 1)
 Q = firedrake.FunctionSpace(mesh, cg1)
 
-b = firedrake.Function(Q)
-h = firedrake.Function(Q)
-h.assign(3e3)
-
 q = Constant(0.0)
 q_b = Constant(0.0)
 q_s = Constant(0.0)
 
 T = firedrake.Function(Q)
-x, ζ = firedrake.SpatialCoordinate(mesh)
-Lx = Constant(lx)
-T_expr = 16 * x / Lx * (1 - x / Lx) * ζ * (1 - ζ)
+x, z = firedrake.SpatialCoordinate(mesh)
+Lx, Lz = Constant(lx), Constant(lz)
+ξ, ζ = x / Lx, z / Lz
+T_expr = 16 * ξ * (1 - ξ) * ζ * (1 - ζ)
 T.interpolate(T_expr)
 
 fields = {
     "temperature": T,
-    "bed": b,
-    "thickness": h,
+    "velocity": Constant((0.0, 0.0)),
+    "temperature_in": Constant(0.0),
     "heat_source": q,
     "surface_flux": q_s,
     "basal_flux": q_b,
@@ -50,7 +43,7 @@ parameters = {
     "conductivity": k,
 }
 
-G = heat_flow.form_problem(**fields, **parameters)
+G = heat_flow.form_problem_cartesian(**fields, **parameters)
 
 sec_per_year = 24 * 60 * 60 * 365.25
 
